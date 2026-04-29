@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Indicator Super Guide</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0; --card:#ffffff; --border:#d3d1c7; --text:#1a1a18;
+  --muted:#5f5e5a; --hint:#888780; --subtle:#f1efe8;
+  --blue:#1a6bb5; --blue-bg:#dbeafe; --blue-txt:#1e40af;
+  --purple-bg:#ede9fe; --purple-txt:#5b21b6;
+  --red-bg:#fee2e2; --red-txt:#991b1b;
+  --green-bg:#d1fae5; --green-txt:#065f46;
+  --gray-bg:#e5e7eb; --gray-txt:#374151;
+  --amber-bg:#fef3c7; --amber-txt:#92400e;
+  --bull:#059669; --bear:#dc2626;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,244,240,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.nav-title{font-size:13px;font-weight:700;color:var(--text);margin-right:8px;white-space:nowrap}
+.nav a{font-size:11px;padding:3px 9px;border-radius:20px;border:0.5px solid var(--border);color:var(--muted);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s}
+.nav a:hover{background:var(--card);color:var(--text)}
+
+/* PAGE */
+.page{max-width:820px;margin:0 auto;padding:28px 20px 80px}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1a3a5c 0%,#0f6e56 100%);border-radius:16px;padding:36px 32px;color:#fff;margin-bottom:28px}
+.hero h1{font-size:28px;font-weight:700;margin-bottom:6px}
+.hero p{font-size:14px;opacity:.85;max-width:560px;line-height:1.65}
+.hero-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.hero-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:500;color:#fff}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.stat{background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
+.stat-num{font-size:22px;font-weight:700;color:var(--text)}
+.stat-label{font-size:11px;color:var(--hint);margin-top:3px}
+
+/* SECTION */
+.section-hdr{font-size:11px;font-weight:700;color:var(--hint);text-transform:uppercase;letter-spacing:.06em;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--border)}
+.section-hdr.accent{border-color:var(--blue)}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.b-trend{background:var(--blue-bg);color:var(--blue-txt)}
+.b-mom{background:var(--purple-bg);color:var(--purple-txt)}
+.b-vol{background:var(--red-bg);color:var(--red-txt)}
+.b-volb{background:var(--green-bg);color:var(--green-txt)}
+.b-sr{background:var(--gray-bg);color:var(--gray-txt)}
+.b-bounce{background:var(--amber-bg);color:var(--amber-txt)}
+.b-fund{background:#e0f2fe;color:#0c4a6e}
+
+/* CARDS */
+.card{background:var(--card);border:0.5px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;transition:border-color .15s}
+.card:hover{border-color:#9ca3af}
+.card-hdr{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none}
+.num{width:30px;height:30px;border-radius:50%;background:var(--subtle);font-size:12px;font-weight:700;text-align:center;line-height:30px;color:var(--hint);flex-shrink:0}
+.card-title-wrap{flex:1;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.card-name{font-size:14px;font-weight:700;color:var(--text)}
+.card-abbr{font-size:12px;color:var(--hint)}
+.chev{font-size:11px;color:var(--hint);transition:transform .2s;flex-shrink:0}
+.chev.open{transform:rotate(180deg)}
+.card-body{display:none;padding:0 16px 18px;border-top:0.5px solid var(--border)}
+.card-body.open{display:block}
+
+/* WHAT BOX */
+.what{font-size:13px;color:var(--muted);line-height:1.7;margin:13px 0 10px}
+
+/* PARAM BOX */
+.param-box{background:var(--subtle);border-radius:10px;padding:12px 14px;margin:10px 0}
+.param-title{font-size:10px;font-weight:700;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.param-row{display:flex;gap:10px;align-items:baseline;margin-bottom:5px}
+.param-code{font-family:'Courier New',monospace;font-size:12px;background:var(--card);border:0.5px solid var(--border);border-radius:4px;padding:2px 8px;color:var(--text);white-space:nowrap;flex-shrink:0}
+.param-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.param-note{font-size:11px;color:var(--hint);margin-top:7px;line-height:1.5;font-style:italic}
+
+/* READINGS */
+.readings{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.reading{background:var(--subtle);border-radius:9px;padding:9px 12px;border-left:3px solid var(--border)}
+.r-bull{border-left-color:var(--bull)}
+.r-bear{border-left-color:var(--bear)}
+.r-neut{border-left-color:#9ca3af}
+.reading-val{font-size:13px;font-weight:700;color:var(--text)}
+.reading-meaning{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+
+/* CHART BOX */
+.chart-box{background:var(--subtle);border-radius:12px;padding:14px;margin:14px 0}
+.chart-title{font-size:11px;font-weight:700;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
+.chart-wrap{position:relative;width:100%;height:160px}
+
+/* EXAMPLE & BOUNCE TIP */
+.example{border-left:3px solid #60a5fa;background:#eff6ff;padding:10px 14px;margin:10px 0;font-size:12px;color:#374151;line-height:1.65;border-radius:0 9px 9px 0}
+.example strong{font-weight:700;color:#1e3a5f}
+.bounce-tip{background:#fffbeb;border:1px solid #f7d083;border-radius:10px;padding:10px 14px;margin:10px 0;font-size:12px;color:#78350f;line-height:1.65}
+.bounce-tip strong{font-weight:700;color:#451a03}
+
+/* INFO BOXES */
+.info-box{border-radius:12px;padding:14px 16px;margin:14px 0;font-size:13px;line-height:1.7}
+.info-blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.info-green{background:#f0fdf4;border:1px solid #bbf7d0;color:#14532d}
+.info-amber{background:#fffbeb;border:1px solid #fde68a;color:#78350f}
+
+/* FORMULA TABLE */
+.ftable{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.ftable th{background:var(--subtle);padding:8px 10px;text-align:left;font-weight:700;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)}
+.ftable td{padding:8px 10px;border-bottom:0.5px solid var(--border);vertical-align:top}
+.ftable tr:last-child td{border-bottom:none}
+.ftable .formula{font-family:'Courier New',monospace;font-size:11px;color:var(--blue);background:#eff6ff;padding:2px 6px;border-radius:4px}
+
+/* GRID 2 COL */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.mini-card{background:var(--subtle);border-radius:10px;padding:12px}
+.mini-card h4{font-size:12px;font-weight:700;color:var(--text);margin-bottom:5px}
+.mini-card p{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* STACK SUMMARY */
+.stack{background:linear-gradient(135deg,#1a3a5c,#0f6e56);border-radius:14px;padding:22px 24px;color:#fff;margin-top:24px}
+.stack h3{font-size:16px;font-weight:700;margin-bottom:16px}
+.stack-step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.step-num{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.2);font-size:12px;font-weight:700;text-align:center;line-height:26px;flex-shrink:0}
+.step-body{font-size:13px;color:rgba(255,255,255,.9);line-height:1.6}
+.step-body strong{color:#fff;font-weight:700}
+
+/* ORDER TABLE */
+.order-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0;border-radius:10px;overflow:hidden}
+.order-table th{background:#1a3a5c;color:#fff;padding:9px 12px;text-align:left;font-size:11px;font-weight:700}
+.order-table td{padding:9px 12px;border-bottom:0.5px solid var(--border);vertical-align:top;background:var(--card)}
+.order-table tr:last-child td{border-bottom:none}
+.order-table tr:nth-child(even) td{background:var(--subtle)}
+
+@media(max-width:560px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .readings{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-title">📈 Super Guide</span>
+  <a href="#core">Core 5</a>
+  <a href="#agreed">High Agreement</a>
+  <a href="#active">Active Traders</a>
+  <a href="#params">Parameters</a>
+  <a href="#formulas">Formulas</a>
+  <a href="#orders">Orders</a>
+  <a href="#bounce">Bounce Stack</a>
+</nav>
+
+<div class="page">
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Stock Technical Indicator Super Guide</h1>
+  <p>Everything in one place — all 20 indicators with parameters explained, real reading examples, charts showing what each indicator looks like, trading formulas, order types, and your complete bounce trading system.</p>
+  <div class="hero-badges">
+    <span class="hero-badge">Top 20 Indicators</span>
+    <span class="hero-badge">Parameters Decoded</span>
+    <span class="hero-badge">Live Charts</span>
+    <span class="hero-badge">Bounce Trading Stack</span>
+    <span class="hero-badge">Formulas + Order Types</span>
+    <span class="hero-badge">Beginner Fundamentals</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-num">100+</div><div class="stat-label">Total indicators exist</div></div>
+  <div class="stat"><div class="stat-num">20–30</div><div class="stat-label">Used by most traders</div></div>
+  <div class="stat"><div class="stat-num">3–5</div><div class="stat-label">Typical per strategy</div></div>
+  <div class="stat"><div class="stat-num">1–2</div><div class="stat-label">Master before adding more</div></div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <span class="badge b-trend">Trend</span>
+  <span class="badge b-mom">Momentum</span>
+  <span class="badge b-vol">Volatility</span>
+  <span class="badge b-volb">Volume</span>
+  <span class="badge b-sr">Support/Resistance</span>
+  <span class="badge b-bounce">★ Bounce Trading</span>
+</div>
+
+<!-- ===================== SECTION 1 ===================== -->
+<div class="section-hdr accent" id="core">Section 1 — Must-Know Core (Almost Every Trader Uses These)</div>
+
+<!-- RSI -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">1</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Relative Strength Index</span><span class="card-abbr">RSI</span>
+      <span class="badge b-mom">Momentum</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Measures how fast and how much a stock's price has changed recently. Outputs a single number between 0 and 100. The most popular single indicator in trading — used to spot when a stock is stretched too far in one direction and may reverse.</p>
+
+    <div class="param-box">
+      <div class="param-title">Parameters — RSI(period)</div>
+      <div class="param-row"><span class="param-code">RSI(14)</span><span class="param-desc">Default and most common. Looks back 14 candles (days on a daily chart, hours on hourly, etc.). The number 14 is the lookback window.</span></div>
+      <div class="param-row"><span class="param-code">RSI(7)</span><span class="param-desc">Shorter lookback. More sensitive — reacts faster but fires more false signals. Used by day traders.</span></div>
+      <div class="param-row"><span class="param-code">RSI(21)</span><span class="param-desc">Longer lookback. Smoother, fewer signals, more reliable. Used by swing and position traders.</span></div>
+      <p class="param-note">Rule: Shorter number = faster but noisier. Longer number = slower but more reliable. The 14 is a balance most traders have agreed on.</p>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">RSI Chart — with 70 (overbought) and 30 (oversold) thresholds</div>
+      <div class="chart-wrap"><canvas id="rsiChart" role="img" aria-label="RSI indicator chart showing overbought and oversold zones"></canvas></div>
+    </div>
+
+    <div class="readings">
+      <div class="reading r-bear"><div class="reading-val">RSI above 70</div><div class="reading-meaning">Overbought — stock may be due for a pullback or sell-off</div></div>
+      <div class="reading r-bull"><div class="reading-val">RSI below 30</div><div class="reading-meaning">Oversold — stock may be due for a bounce or recovery</div></div>
+      <div class="reading r-neut"><div class="reading-val">RSI 40–60</div><div class="reading-meaning">Neutral — no strong signal in either direction</div></div>
+      <div class="reading r-bull"><div class="reading-val">RSI at 28, curling up</div><div class="reading-meaning">Leaving oversold territory — potential bounce entry trigger</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> A stock drops hard for 3 days. RSI(14) hits 24. That means the last 14 days of selling pressure has been extreme. Bounce traders watch for RSI to curl back up from below 30. The cross back above 30 is the entry trigger.</div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> RSI is your #1 tool. Look for RSI dipping below 30, then crossing back above it. That crossback is your trigger. Always combine with volume to confirm the reversal is real and not a fake-out.</div>
+  </div>
+</div>
+
+<!-- MACD -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">2</div>
+    <div class="card-title-wrap">
+      <span class="card-name">MACD</span><span class="card-abbr">Moving Average Convergence Divergence</span>
+      <span class="badge b-trend">Trend</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Shows the relationship between two exponential moving averages of price. Gives you trend direction and momentum in one indicator. Has three parts on the chart: the MACD line, the signal line, and the histogram bars that show the gap between them.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — MACD(fast, slow, signal) — Three numbers separated by commas</div>
+      <div class="param-row"><span class="param-code">MACD(12,26,9)</span><span class="param-desc">Default and most common setting used by virtually all platforms.</span></div>
+      <div class="param-row"><span class="param-code">12</span><span class="param-desc">Fast EMA period — the shorter, more reactive moving average. Reacts quickly to recent price moves.</span></div>
+      <div class="param-row"><span class="param-code">26</span><span class="param-desc">Slow EMA period — the longer, base moving average. Shows the larger trend direction.</span></div>
+      <div class="param-row"><span class="param-code">9</span><span class="param-desc">Signal line period — an EMA of the MACD line itself. Smooths it out so crossovers are cleaner.</span></div>
+      <p class="param-note">The MACD line = 12 EMA minus 26 EMA. When that difference grows, momentum is building. When it shrinks, momentum is fading.</p>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">MACD — MACD line (blue), Signal line (orange), Histogram (bars)</div>
+      <div class="chart-wrap"><canvas id="macdChart" role="img" aria-label="MACD chart showing line, signal, and histogram"></canvas></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">MACD crosses above signal</div><div class="reading-meaning">Bullish crossover — potential buy signal</div></div>
+      <div class="reading r-bear"><div class="reading-val">MACD crosses below signal</div><div class="reading-meaning">Bearish crossover — potential sell signal</div></div>
+      <div class="reading r-bull"><div class="reading-val">Histogram bars growing</div><div class="reading-meaning">Momentum increasing in current direction</div></div>
+      <div class="reading r-bear"><div class="reading-val">Histogram bars shrinking</div><div class="reading-meaning">Momentum fading — possible trend change ahead</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> Stock has been falling. MACD and its signal line are both below zero. The histogram bars start getting smaller (less negative). Then MACD crosses above the signal line. This is a momentum shift — the setup bounce traders watch for.</div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> Watch for MACD crossing above its signal line while both are still below zero. Oversold territory + momentum shift = strong bounce setup. Best when combined with RSI below 30 at the same time.</div>
+  </div>
+</div>
+
+<!-- SMA / EMA combined -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">3–4</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Moving Averages</span><span class="card-abbr">SMA &amp; EMA</span>
+      <span class="badge b-trend">Trend</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">SMA (Simple Moving Average) adds the closing prices over N days and divides by N — equal weight to every day. EMA (Exponential Moving Average) does the same thing but gives more weight to recent prices, so it reacts faster. Both create a smooth line on your chart that shows trend direction.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — SMA(period) or EMA(period) — one number = how many candles to average</div>
+      <div class="param-row"><span class="param-code">SMA(20) / EMA(20)</span><span class="param-desc">Short-term trend. Used by active traders to track recent price momentum.</span></div>
+      <div class="param-row"><span class="param-code">SMA(50) / EMA(50)</span><span class="param-desc">Medium-term trend. One of the most-watched lines on any chart. Institutions react at this level.</span></div>
+      <div class="param-row"><span class="param-code">SMA(200) / EMA(200)</span><span class="param-desc">Long-term benchmark. Above it = bull market territory. Below it = bear market territory.</span></div>
+      <p class="param-note">EMA reacts faster than SMA with the same period. For the same number, EMA will move sooner when price changes direction. Active traders usually prefer EMA.</p>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Price with SMA(50) and SMA(200) — Golden Cross and Death Cross zones shown</div>
+      <div class="chart-wrap" style="height:180px"><canvas id="smaChart" role="img" aria-label="Moving average chart showing golden cross and death cross"></canvas></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">Price above SMA(200)</div><div class="reading-meaning">Long-term uptrend — generally safer to look for buys</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price below SMA(200)</div><div class="reading-meaning">Long-term downtrend — be cautious with buy entries</div></div>
+      <div class="reading r-bull"><div class="reading-val">SMA(50) crosses above SMA(200)</div><div class="reading-meaning">"Golden Cross" — major bullish signal watched by all traders</div></div>
+      <div class="reading r-bear"><div class="reading-val">SMA(50) crosses below SMA(200)</div><div class="reading-meaning">"Death Cross" — major bearish signal</div></div>
+    </div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> EMA(20) and EMA(50) are your dynamic support zones. When price drops to touch EMA and RSI is near 30–40, and volume is low on the pullback — that is a textbook bounce entry zone. SMA(200) is the biggest floor of all; bounces off it are powerful.</div>
+  </div>
+</div>
+
+<!-- Bollinger Bands -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">5</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Bollinger Bands</span><span class="card-abbr">BB</span>
+      <span class="badge b-vol">Volatility</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Three lines drawn around price: a middle SMA, and upper and lower bands placed a set number of standard deviations away. The bands expand when volatility is high and contract when it is low. Price stays within the bands roughly 95% of the time, so touching a band is statistically meaningful.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — BB(period, standard deviations) — two numbers</div>
+      <div class="param-row"><span class="param-code">BB(20, 2)</span><span class="param-desc">Default. Middle = SMA(20). Bands are 2 standard deviations above and below the middle line.</span></div>
+      <div class="param-row"><span class="param-code">20</span><span class="param-desc">The lookback period for the middle SMA — how many days are averaged to draw the center line.</span></div>
+      <div class="param-row"><span class="param-code">2</span><span class="param-desc">Number of standard deviations for the band width. Higher = wider bands, fewer "touches." Lower = tighter, more signals but more false ones.</span></div>
+      <div class="param-row"><span class="param-code">BB(20, 1.5)</span><span class="param-desc">Tighter bands — used in scalping. More signals but more noise.</span></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Bollinger Bands — Price (black), Upper Band (red), Middle SMA (blue), Lower Band (green)</div>
+      <div class="chart-wrap" style="height:180px"><canvas id="bbChart" role="img" aria-label="Bollinger Bands chart showing price and upper and lower bands"></canvas></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bear"><div class="reading-val">Price touches upper band</div><div class="reading-meaning">Statistically stretched high — possible pullback or reversal</div></div>
+      <div class="reading r-bull"><div class="reading-val">Price touches lower band</div><div class="reading-meaning">Statistically stretched low — possible bounce or reversal</div></div>
+      <div class="reading r-neut"><div class="reading-val">Bands squeeze together</div><div class="reading-meaning">"Bollinger Squeeze" — low volatility, big move incoming (direction unknown)</div></div>
+      <div class="reading r-bear"><div class="reading-val">Bands suddenly widen</div><div class="reading-meaning">Volatility expansion — a breakout or breakdown is in progress</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> Stock falls sharply and closes below the lower Bollinger Band. RSI is at 26. Next candle closes back inside the bands. This "band snap-back" pattern is a classic bounce signal. The lower band acts like a rubber band — price gets pulled back to the middle SMA.</div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> A close below the lower band followed by a close back inside = strong bounce signal. Add RSI below 30 simultaneously for extra confirmation. This combination is one of the most reliable bounce setups available.</div>
+  </div>
+</div>
+
+<!-- ===================== SECTION 2 ===================== -->
+<div class="section-hdr accent" id="agreed">Section 2 — High Trader Agreement</div>
+
+<!-- Volume -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">6</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Volume</span><span class="card-abbr">VOL</span>
+      <span class="badge b-volb">Volume</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">The total number of shares traded in a period. Not a formula — a raw count. But it is the most important confirmation tool in trading. A price move without volume behind it is weak and untrustworthy. Volume reveals what is actually happening under the surface.</p>
+    <div class="param-box">
+      <div class="param-title">Volume has no formula input — compared against moving averages of itself:</div>
+      <div class="param-row"><span class="param-code">Average Volume</span><span class="param-desc">Usually a 20-day or 50-day average. If today's volume is 2x the average, that is significant.</span></div>
+      <div class="param-row"><span class="param-code">Relative Volume (RVOL)</span><span class="param-desc">Today's volume ÷ average volume. RVOL of 2.0 = twice the normal trading activity today.</span></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Volume bars — green = up day, red = down day. Watch for spikes on reversal days.</div>
+      <div class="chart-wrap"><canvas id="volChart" role="img" aria-label="Volume bar chart showing trading activity"></canvas></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">Price up + high volume</div><div class="reading-meaning">Strong buying — move is confirmed, likely to continue</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price up + low volume</div><div class="reading-meaning">Weak buying — may not hold, possible fake-out</div></div>
+      <div class="reading r-bull"><div class="reading-val">Price drops on low volume</div><div class="reading-meaning">Weak selling — sellers not committed, bounce more likely</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price drops on high volume</div><div class="reading-meaning">Heavy selling — downtrend likely continues, avoid catching falling knives</div></div>
+    </div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> The reversal candle must have noticeably higher volume than the down candles before it. A bounce on low volume is a trap. A bounce on high volume is an opportunity. Volume is your final confirmation before entering.</div>
+  </div>
+</div>
+
+<!-- Stochastic -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">7</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Stochastic Oscillator</span><span class="card-abbr">Stoch</span>
+      <span class="badge b-mom">Momentum</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Compares where the closing price is relative to the highest and lowest prices over a set period. Gives two lines — %K (fast) and %D (slow). Works similarly to RSI but focuses on the price range rather than the speed of change. Generates a crossover signal when the two lines intersect.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — Stoch(%K period, %K smoothing, %D period) — three numbers</div>
+      <div class="param-row"><span class="param-code">Stoch(14,3,3)</span><span class="param-desc">Default. %K looks back 14 periods, is smoothed 3 times, %D is a 3-period average of %K.</span></div>
+      <div class="param-row"><span class="param-code">14</span><span class="param-desc">How many periods to look back to find the high/low price range</span></div>
+      <div class="param-row"><span class="param-code">3 (first)</span><span class="param-desc">Smoothing applied to %K line to reduce noise and false signals</span></div>
+      <div class="param-row"><span class="param-code">3 (second)</span><span class="param-desc">Period for %D line — a moving average of %K. The signal crossovers happen between %K and %D.</span></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Stochastic Oscillator — %K (blue), %D (orange), with 80/20 overbought/oversold zones</div>
+      <div class="chart-wrap"><canvas id="stochChart" role="img" aria-label="Stochastic oscillator showing K and D lines with overbought and oversold zones"></canvas></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bear"><div class="reading-val">%K above 80</div><div class="reading-meaning">Overbought — possible pullback coming</div></div>
+      <div class="reading r-bull"><div class="reading-val">%K below 20</div><div class="reading-meaning">Oversold — watch for reversal signals</div></div>
+      <div class="reading r-bull"><div class="reading-val">%K crosses above %D below 20</div><div class="reading-meaning">Bullish crossover in oversold zone — strong buy signal</div></div>
+      <div class="reading r-bear"><div class="reading-val">%K crosses below %D above 80</div><div class="reading-meaning">Bearish crossover in overbought zone — strong sell signal</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> Stock pulls back. Stochastic %K drops to 15. Then %K crosses above %D while both are still below 20. Many traders use this crossover combined with RSI to double-confirm a bounce entry before pulling the trigger.</div>
+  </div>
+</div>
+
+<!-- ATR -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">8</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Average True Range</span><span class="card-abbr">ATR</span>
+      <span class="badge b-vol">Volatility</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Measures how much a stock typically moves per day on average. Tells you the expected range of movement. Does NOT tell you direction — only how big the moves tend to be. Critical for setting stop-losses and profit targets based on how volatile the stock actually is.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — ATR(period)</div>
+      <div class="param-row"><span class="param-code">ATR(14)</span><span class="param-desc">Default. Averages the true range over 14 periods. Most common setting across all platforms.</span></div>
+      <div class="param-row"><span class="param-code">ATR(7)</span><span class="param-desc">Shorter lookback — more reactive to recent volatility spikes. Used by day traders.</span></div>
+      <div class="param-row"><span class="param-code">True Range formula</span><span class="param-desc">Each day = max of: (High − Low), (High − Prior Close), (Prior Close − Low). ATR is a smoothed average of these.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-neut"><div class="reading-val">ATR = $1.50</div><div class="reading-meaning">Stock moves $1.50 on average per day. Use this to size stop-losses.</div></div>
+      <div class="reading r-bear"><div class="reading-val">ATR spiking higher</div><div class="reading-meaning">Volatility expanding — bigger swings, higher risk, widen your stops</div></div>
+      <div class="reading r-bull"><div class="reading-val">ATR declining</div><div class="reading-meaning">Volatility compressing — market calming down, consolidating</div></div>
+      <div class="reading r-neut"><div class="reading-val">Stop = 1.5 × ATR below entry</div><div class="reading-meaning">Classic stop-loss formula — gives room to breathe without being too wide</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> You enter a bounce at $50. ATR(14) = $2.00. Stop = $50 − (1.5 × $2.00) = $47.00. If you used a $0.25 stop on a $2 ATR stock you would get stopped out constantly by normal daily noise before the bounce even happens.</div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> ATR is your risk management tool. Use it on every bounce trade to size your stop-loss. Never use a fixed dollar stop — let ATR tell you how much room the stock naturally needs.</div>
+  </div>
+</div>
+
+<!-- OBV -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">9</div>
+    <div class="card-title-wrap">
+      <span class="card-name">On-Balance Volume</span><span class="card-abbr">OBV</span>
+      <span class="badge b-volb">Volume</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Keeps a running total of volume. Adds volume on up days, subtracts on down days. The idea: volume precedes price. Smart money accumulates quietly before a move, which shows in OBV before price reacts. OBV rising while price falls = bullish divergence = bounce often follows.</p>
+    <div class="param-box">
+      <div class="param-title">How OBV is calculated — no parameters to set:</div>
+      <div class="param-row"><span class="param-code">Price up today</span><span class="param-desc">OBV = Yesterday's OBV + Today's volume</span></div>
+      <div class="param-row"><span class="param-code">Price down today</span><span class="param-desc">OBV = Yesterday's OBV − Today's volume</span></div>
+      <div class="param-row"><span class="param-code">Price unchanged</span><span class="param-desc">OBV = Yesterday's OBV (no change)</span></div>
+      <p class="param-note">The actual OBV number is not meaningful. Only whether it is trending up or down relative to price direction is what matters.</p>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">OBV rising + price rising</div><div class="reading-meaning">Confirmed uptrend — buying is strong and real</div></div>
+      <div class="reading r-bear"><div class="reading-val">OBV falling + price rising</div><div class="reading-meaning">Divergence — move may be weak, distribution happening</div></div>
+      <div class="reading r-bull"><div class="reading-val">OBV rising + price falling</div><div class="reading-meaning">Bullish divergence — quiet accumulation, bounce likely ahead</div></div>
+      <div class="reading r-bear"><div class="reading-val">OBV falling + price falling</div><div class="reading-meaning">Confirmed downtrend — selling pressure is real</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> Stock price drops for a week but OBV climbs slowly throughout. This means buyers are accumulating shares even as price falls — often a precursor to a strong reversal upward. OBV divergence often shows the bounce before price shows it.</div>
+  </div>
+</div>
+
+<!-- ADX -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">10</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Average Directional Index</span><span class="card-abbr">ADX</span>
+      <span class="badge b-trend">Trend</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Measures how STRONG a trend is — but NOT which direction. A high ADX + price going up = strong uptrend. A high ADX + price going down = strong downtrend. A low ADX means no trend — the stock is ranging sideways. This tells you which mode the market is in, so you pick the right strategy.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — ADX(period)</div>
+      <div class="param-row"><span class="param-code">ADX(14)</span><span class="param-desc">Default. Comes with +DI and -DI lines that show which direction the trend is moving.</span></div>
+      <div class="param-row"><span class="param-code">+DI</span><span class="param-desc">Positive directional indicator — strength of upward movement</span></div>
+      <div class="param-row"><span class="param-code">-DI</span><span class="param-desc">Negative directional indicator — strength of downward movement</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-neut"><div class="reading-val">ADX below 20</div><div class="reading-meaning">No real trend — stock is ranging. Oscillators like RSI work better here.</div></div>
+      <div class="reading r-bull"><div class="reading-val">ADX above 25</div><div class="reading-meaning">Trend confirmed and strong. Trend-following strategies perform better.</div></div>
+      <div class="reading r-bull"><div class="reading-val">ADX above 40</div><div class="reading-meaning">Very strong trend — stay with it until ADX starts declining</div></div>
+      <div class="reading r-neut"><div class="reading-val">ADX falling from high</div><div class="reading-meaning">Trend is losing steam — possible reversal starting</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> RSI hits 28 on a stock. Looks like a great bounce setup. But ADX is 47 and still rising. The downtrend is extremely powerful. Even oversold RSI may not stop a strong downtrend. ADX tells you when NOT to trade a bounce as much as when to enter one.</div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> Check ADX before entering. If ADX is above 35 and still rising, the trend is too strong to trade against — skip it. Look for bounce setups where ADX is below 25 or declining from a high peak, signaling the trend is exhausting.</div>
+  </div>
+</div>
+
+<!-- VWAP -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">11</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Volume Weighted Average Price</span><span class="card-abbr">VWAP</span>
+      <span class="badge b-volb">Volume</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">The average price of a stock weighted by volume throughout the trading day. Resets at the open every single day. Institutions use it as their daily benchmark — buying below VWAP means they got a good price for the session.</p>
+    <div class="param-box">
+      <div class="param-title">VWAP has no user-set period — it resets and recalculates automatically each day:</div>
+      <div class="param-row"><span class="param-code">VWAP formula</span><span class="param-desc">(Cumulative Price × Volume) ÷ Cumulative Volume — running total recalculated throughout each session.</span></div>
+      <div class="param-row"><span class="param-code">Anchored VWAP</span><span class="param-desc">Advanced variant. You set the start point yourself (e.g., from a major swing low) instead of from the day open.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">Price above VWAP</div><div class="reading-meaning">Bullish intraday bias — buyers in control today</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price below VWAP</div><div class="reading-meaning">Bearish intraday bias — sellers in control today</div></div>
+      <div class="reading r-bull"><div class="reading-val">Price reclaims VWAP</div><div class="reading-meaning">Potential intraday reversal — watch for volume confirmation</div></div>
+      <div class="reading r-neut"><div class="reading-val">Price hugging VWAP all day</div><div class="reading-meaning">Indecisive session — wait for a clear directional break</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> Stock opens weak and drops below VWAP by 10am. By noon it rallies back above VWAP on rising volume. Institutions see the stock as fairly priced again and begin buying. That VWAP reclaim is one of the most reliable intraday signals for day traders.</div>
+  </div>
+</div>
+
+<!-- Fibonacci -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">12</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Fibonacci Retracement</span><span class="card-abbr">Fib</span>
+      <span class="badge b-sr">Support/Resistance</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Draws horizontal lines at key percentage levels of a prior price move, based on the Fibonacci sequence from mathematics. These levels act as natural support and resistance zones where price frequently pauses, bounces, or reverses. Widely used and widely watched — their effectiveness partly comes from being a self-fulfilling prophecy since so many traders use them.</p>
+    <div class="param-box">
+      <div class="param-title">Key levels — no formula input. You pick the swing high and swing low on your chart:</div>
+      <div class="param-row"><span class="param-code">23.6%</span><span class="param-desc">Shallow retracement — weak pullback, trend still very strong. Common in very strong uptrends.</span></div>
+      <div class="param-row"><span class="param-code">38.2%</span><span class="param-desc">Moderate retracement — common bounce zone in healthy uptrends.</span></div>
+      <div class="param-row"><span class="param-code">50.0%</span><span class="param-desc">Not a true Fibonacci number but widely watched as a psychological midpoint level.</span></div>
+      <div class="param-row"><span class="param-code">61.8%</span><span class="param-desc">"The golden ratio" — the most powerful level. Major bounce and reversal zone.</span></div>
+      <div class="param-row"><span class="param-code">78.6%</span><span class="param-desc">Deep retracement — if price reaches here the original trend may be reversing entirely.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">Price touches 38.2% and holds</div><div class="reading-meaning">Shallow pullback holding — strong trend, good bounce zone</div></div>
+      <div class="reading r-bull"><div class="reading-val">Price touches 61.8% and holds</div><div class="reading-meaning">Golden ratio support — very high-probability bounce level</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price breaks below 61.8%</div><div class="reading-meaning">Deep correction — original trend may be over</div></div>
+      <div class="reading r-neut"><div class="reading-val">Multiple levels stack up</div><div class="reading-meaning">"Confluence" — extremely strong support when Fib + EMA + S/R all align</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> Stock rallied from $40 to $80. Now pulling back. You draw Fibonacci from $40 to $80. The 61.8% level lands at $55.28. Price pulls back to $55, RSI hits 32, and volume dries up. Fib level + oversold RSI + low volume = high-probability bounce setup.</div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> Draw Fibonacci from the most recent swing low to swing high. Watch 38.2%, 50%, and 61.8%. When price hits one of those AND RSI is oversold AND volume drops on the pullback — that is your zone to watch for a bounce entry.</div>
+  </div>
+</div>
+
+<!-- S/R -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">13</div>
+    <div class="card-title-wrap">
+      <span class="card-name">Support &amp; Resistance</span><span class="card-abbr">S/R</span>
+      <span class="badge b-sr">Support/Resistance</span><span class="badge b-bounce">★ Bounce</span>
+    </div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Horizontal price levels where a stock has repeatedly reversed or paused. Support is a floor where buyers stepped in before. Resistance is a ceiling where sellers pushed price down before. No formula — identified by eye on the chart. One of the oldest tools in trading and still one of the most effective.</p>
+    <div class="param-box">
+      <div class="param-title">No parameters — identified visually. Key rules:</div>
+      <div class="param-row"><span class="param-code">More touches = stronger</span><span class="param-desc">A level touched 4 times is much stronger than one touched once. More history = more traders watching it.</span></div>
+      <div class="param-row"><span class="param-code">Role reversal</span><span class="param-desc">Old resistance that is broken often becomes new support. Old support that is broken becomes new resistance.</span></div>
+      <div class="param-row"><span class="param-code">Round numbers</span><span class="param-desc">$50, $100, $200 etc. act as psychological S/R levels because many orders cluster at these prices.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">Price returns to old support</div><div class="reading-meaning">High-probability bounce zone — watch for confirmation candle with volume</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price breaks below support</div><div class="reading-meaning">Support failed — next support level below becomes the target</div></div>
+      <div class="reading r-bull"><div class="reading-val">Old resistance becomes support</div><div class="reading-meaning">Role reversal — bullish. Former ceiling now holds as floor.</div></div>
+      <div class="reading r-bear"><div class="reading-val">Old support becomes resistance</div><div class="reading-meaning">Role reversal — bearish. Former floor now acts as ceiling.</div></div>
+    </div>
+    <div class="bounce-tip"><strong>★ Bounce Trading:</strong> Every bounce trade is a bet that a support level will hold. S/R is the foundation. Layer RSI, volume, and ATR on top to confirm before entering.</div>
+  </div>
+</div>
+
+<!-- ===================== SECTION 3 ===================== -->
+<div class="section-hdr accent" id="active">Section 3 — Popular with Active Traders</div>
+
+<!-- PSAR, Ichi, CCI, %R, A/D, StdDev, Pivot — compact cards -->
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">14</div>
+    <div class="card-title-wrap"><span class="card-name">Parabolic SAR</span><span class="card-abbr">PSAR</span><span class="badge b-trend">Trend</span></div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Plots dots above or below price. Dots below = uptrend, dots above = downtrend. When price crosses the dots, the system reverses direction. Simple and visual — great as a trailing stop tool.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — PSAR(step, max)</div>
+      <div class="param-row"><span class="param-code">PSAR(0.02, 0.2)</span><span class="param-desc">Default. Step = how fast the dots accelerate toward price. Max = the cap on that acceleration.</span></div>
+      <div class="param-row"><span class="param-code">0.02 (step)</span><span class="param-desc">Starts at 0.02, increases by 0.02 every time a new high/low is set. Higher step = more sensitive, more signals.</span></div>
+      <div class="param-row"><span class="param-code">0.2 (max)</span><span class="param-desc">Maximum the acceleration can reach. Lower max = slower dots, fewer reversal signals.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">Dots flip below price</div><div class="reading-meaning">System signals uptrend — long entry</div></div>
+      <div class="reading r-bear"><div class="reading-val">Dots flip above price</div><div class="reading-meaning">System signals downtrend — exit or short</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">15</div>
+    <div class="card-title-wrap"><span class="card-name">Ichimoku Cloud</span><span class="card-abbr">Ichi</span><span class="badge b-trend">Trend</span></div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">A complete trading system in one indicator. Five lines create a shaded "cloud" that shows trend direction, support/resistance, and momentum all at once. Very popular in Japanese and Asian markets. Developed by journalist Goichi Hosoda.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — Ichimoku(conversion, base, lagging span)</div>
+      <div class="param-row"><span class="param-code">Ichi(9,26,52)</span><span class="param-desc">Default. Three periods from the Japanese trading calendar.</span></div>
+      <div class="param-row"><span class="param-code">9 — Tenkan-sen</span><span class="param-desc">Fast line = (9-period high + low) ÷ 2. Short-term momentum signal line.</span></div>
+      <div class="param-row"><span class="param-code">26 — Kijun-sen</span><span class="param-desc">Base line = (26-period high + low) ÷ 2. Medium-term trend and key support/resistance.</span></div>
+      <div class="param-row"><span class="param-code">52 — Senkou Span B</span><span class="param-desc">One cloud boundary = (52-period high + low) ÷ 2, plotted 26 periods into the future.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">Price above the cloud</div><div class="reading-meaning">Bullish — cloud below acts as support</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price below the cloud</div><div class="reading-meaning">Bearish — cloud above acts as resistance</div></div>
+      <div class="reading r-bull"><div class="reading-val">Tenkan crosses above Kijun</div><div class="reading-meaning">"TK Cross" — bullish signal, strongest when price is above cloud</div></div>
+      <div class="reading r-neut"><div class="reading-val">Price inside the cloud</div><div class="reading-meaning">Transitional zone — wait for a clean break out of the cloud</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">16</div>
+    <div class="card-title-wrap"><span class="card-name">Commodity Channel Index</span><span class="card-abbr">CCI</span><span class="badge b-mom">Momentum</span></div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Measures how far current price is from its statistical average. More extreme than RSI — readings of ±200 or ±300 can occur in strong trends. Often used to spot early trend changes and breakouts.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — CCI(period)</div>
+      <div class="param-row"><span class="param-code">CCI(20)</span><span class="param-desc">Default. Measures deviation from the 20-period average using mean absolute deviation.</span></div>
+      <div class="param-row"><span class="param-code">CCI(14)</span><span class="param-desc">Faster version — more reactive, used by short-term traders for quicker signals.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bear"><div class="reading-val">CCI above +100</div><div class="reading-meaning">Overbought — possible pullback</div></div>
+      <div class="reading r-bull"><div class="reading-val">CCI below -100</div><div class="reading-meaning">Oversold — watch for CCI crossing back above -100 as buy signal</div></div>
+      <div class="reading r-bull"><div class="reading-val">CCI crosses above -100</div><div class="reading-meaning">Exiting oversold — momentum recovering</div></div>
+      <div class="reading r-neut"><div class="reading-val">CCI between -100 and +100</div><div class="reading-meaning">Normal zone — no strong directional bias</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">17</div>
+    <div class="card-title-wrap"><span class="card-name">Williams %R</span><span class="card-abbr">%R</span><span class="badge b-mom">Momentum</span></div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Very similar to Stochastic but runs on an inverted scale from 0 to -100. Shows where current price sits within the recent high-low range. Fast-reacting and good at spotting short-term reversals.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — Williams %R(period)</div>
+      <div class="param-row"><span class="param-code">%R(14)</span><span class="param-desc">Default. Scale 0 (top of range) to -100 (bottom). Above -20 = overbought. Below -80 = oversold.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bear"><div class="reading-val">%R above -20</div><div class="reading-meaning">Overbought — near top of recent range</div></div>
+      <div class="reading r-bull"><div class="reading-val">%R below -80</div><div class="reading-meaning">Oversold — near bottom of recent range, bounce watch</div></div>
+    </div>
+    <div class="info-box info-amber">Always confirm %R oversold signals with ADX. A strong downtrend (ADX &gt; 35) can keep a stock in oversold territory for a very long time without bouncing.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">18</div>
+    <div class="card-title-wrap"><span class="card-name">Accumulation / Distribution Line</span><span class="card-abbr">A/D</span><span class="badge b-volb">Volume</span></div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Uses both price and volume to show money flowing into or out of a stock. More sophisticated than OBV because it accounts for where the close is within the day's range — not just whether price went up or down.</p>
+    <div class="param-box">
+      <div class="param-title">No user parameters — uses the Money Flow Multiplier:</div>
+      <div class="param-row"><span class="param-code">MFM</span><span class="param-desc">= [(Close − Low) − (High − Close)] ÷ (High − Low). Ranges from -1 to +1.</span></div>
+      <div class="param-row"><span class="param-code">MFM near +1</span><span class="param-desc">Price closed near the high — strong buying pressure that day</span></div>
+      <div class="param-row"><span class="param-code">MFM near -1</span><span class="param-desc">Price closed near the low — strong selling pressure that day</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">A/D rising + price falling</div><div class="reading-meaning">Bullish divergence — quiet accumulation, bounce likely</div></div>
+      <div class="reading r-bear"><div class="reading-val">A/D falling + price rising</div><div class="reading-meaning">Bearish divergence — distribution, rally may be fading</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">19</div>
+    <div class="card-title-wrap"><span class="card-name">Standard Deviation</span><span class="card-abbr">StdDev</span><span class="badge b-vol">Volatility</span></div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Measures how spread out price returns are from their average. The math behind Bollinger Bands. High StdDev = prices are swinging wildly. Low StdDev = calm and consolidating — often precedes a big explosive move.</p>
+    <div class="param-box">
+      <div class="param-title">Parameters — StdDev(period)</div>
+      <div class="param-row"><span class="param-code">StdDev(20)</span><span class="param-desc">Most common. Calculates standard deviation of closing prices over the last 20 periods.</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bear"><div class="reading-val">High StdDev</div><div class="reading-meaning">High volatility — bigger risk and bigger potential reward</div></div>
+      <div class="reading r-bull"><div class="reading-val">Low and compressing StdDev</div><div class="reading-meaning">Quiet market — often precedes a large breakout move</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hdr" onclick="tog(this)">
+    <div class="num">20</div>
+    <div class="card-title-wrap"><span class="card-name">Pivot Points</span><span class="card-abbr">PP</span><span class="badge b-sr">Support/Resistance</span></div>
+    <div class="chev">▼</div>
+  </div>
+  <div class="card-body">
+    <p class="what">Calculated from yesterday's high, low, and close to project support and resistance levels for today. Widely used by day traders to plan entries and exits before the market even opens.</p>
+    <div class="param-box">
+      <div class="param-title">Formulas — no user input, uses prior day OHLC data:</div>
+      <div class="param-row"><span class="param-code">PP</span><span class="param-desc">= (Prior High + Prior Low + Prior Close) ÷ 3 — central pivot level</span></div>
+      <div class="param-row"><span class="param-code">R1</span><span class="param-desc">= (2 × PP) − Prior Low — first resistance above PP</span></div>
+      <div class="param-row"><span class="param-code">S1</span><span class="param-desc">= (2 × PP) − Prior High — first support below PP</span></div>
+      <div class="param-row"><span class="param-code">R2 / S2</span><span class="param-desc">R2 = PP + (Prior High − Prior Low) | S2 = PP − (Prior High − Prior Low)</span></div>
+    </div>
+    <div class="readings">
+      <div class="reading r-bull"><div class="reading-val">Price holds above PP</div><div class="reading-meaning">Bullish day bias — look for longs targeting R1</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price falls below PP</div><div class="reading-meaning">Bearish day bias — watch for bounces at S1</div></div>
+      <div class="reading r-bull"><div class="reading-val">Price touches S1 and holds</div><div class="reading-meaning">First support holding — common intraday bounce level</div></div>
+      <div class="reading r-bear"><div class="reading-val">Price breaks through S2</div><div class="reading-meaning">Significant weakness — sellers firmly in control today</div></div>
+    </div>
+    <div class="example"><strong>Real example:</strong> Before market open you calculate S1 = $148.50. Stock opens weak and drops toward it. RSI on the 5-minute chart hits 32. Price touches $148.52 and bounces. Classic pivot point + RSI bounce trade used by day traders every single session.</div>
+  </div>
+</div>
+
+<!-- ===================== PARAMETERS REFERENCE ===================== -->
+<div class="section-hdr" id="params">Section 4 — Parameter Quick Reference</div>
+
+<div class="info-box info-blue">When you see a number inside parentheses after an indicator name — like RSI(14) or EMA(50) — that number is always the <strong>lookback period</strong>: how many candles the indicator looks back at to do its math. Smaller number = faster response. Bigger number = slower, smoother, more reliable.</div>
+
+<table class="ftable">
+  <thead><tr><th>Indicator</th><th>Notation</th><th>What each number means</th></tr></thead>
+  <tbody>
+    <tr><td><strong>RSI</strong></td><td><span class="formula">RSI(14)</span></td><td>14 = lookback period (candles). Shorter = faster. Longer = smoother.</td></tr>
+    <tr><td><strong>SMA / EMA</strong></td><td><span class="formula">SMA(50)</span></td><td>50 = number of candles averaged. SMA = equal weight. EMA = more weight on recent.</td></tr>
+    <tr><td><strong>MACD</strong></td><td><span class="formula">MACD(12,26,9)</span></td><td>12 = fast EMA, 26 = slow EMA, 9 = signal line smoothing period.</td></tr>
+    <tr><td><strong>Bollinger Bands</strong></td><td><span class="formula">BB(20,2)</span></td><td>20 = middle SMA period, 2 = how many standard deviations wide the bands are.</td></tr>
+    <tr><td><strong>ATR</strong></td><td><span class="formula">ATR(14)</span></td><td>14 = lookback period to average the true range. Lower = more reactive to recent volatility.</td></tr>
+    <tr><td><strong>Stochastic</strong></td><td><span class="formula">Stoch(14,3,3)</span></td><td>14 = lookback for high/low range, 3 = %K smoothing, 3 = %D period.</td></tr>
+    <tr><td><strong>ADX</strong></td><td><span class="formula">ADX(14)</span></td><td>14 = smoothing period. Comes with +DI and -DI as companion lines.</td></tr>
+    <tr><td><strong>CCI</strong></td><td><span class="formula">CCI(20)</span></td><td>20 = lookback period for mean deviation calculation.</td></tr>
+    <tr><td><strong>Williams %R</strong></td><td><span class="formula">%R(14)</span></td><td>14 = lookback for high/low range. Scale is inverted: 0 to -100.</td></tr>
+    <tr><td><strong>Parabolic SAR</strong></td><td><span class="formula">PSAR(0.02,0.2)</span></td><td>0.02 = step size (acceleration), 0.2 = maximum acceleration factor.</td></tr>
+    <tr><td><strong>Ichimoku</strong></td><td><span class="formula">Ichi(9,26,52)</span></td><td>9 = Tenkan period, 26 = Kijun period, 52 = Senkou Span B period.</td></tr>
+    <tr><td><strong>Fibonacci</strong></td><td><span class="formula">No parameters</span></td><td>You pick the swing high and swing low manually. Key levels: 23.6%, 38.2%, 50%, 61.8%.</td></tr>
+    <tr><td><strong>VWAP</strong></td><td><span class="formula">No parameters</span></td><td>Resets each day at open. Automatically calculates from all intraday price × volume data.</td></tr>
+    <tr><td><strong>OBV / A/D</strong></td><td><span class="formula">No parameters</span></td><td>Both are running cumulative totals based on price direction and volume. No inputs needed.</td></tr>
+  </tbody>
+</table>
+
+<!-- ===================== TRADING FUNDAMENTALS ===================== -->
+<div class="section-hdr" id="formulas">Section 5 — Trading Fundamentals &amp; Must-Know Formulas</div>
+
+<div class="info-box info-green">These fundamentals come directly from the beginner addition — essential math and concepts every trader needs to understand before touching indicators.</div>
+
+<div class="grid2">
+  <div class="mini-card">
+    <h4>Price Change %</h4>
+    <p>((New Price – Old Price) / Old Price) × 100</p>
+    <p style="margin-top:6px;font-size:11px;color:#888">Example: $50 → $55 = (5/50) × 100 = <strong>10% gain</strong></p>
+  </div>
+  <div class="mini-card">
+    <h4>Return %</h4>
+    <p>((Sell Price – Buy Price) / Buy Price) × 100</p>
+    <p style="margin-top:6px;font-size:11px;color:#888">Shows your gain relative to the capital you put in</p>
+  </div>
+  <div class="mini-card">
+    <h4>Profit (Dollar)</h4>
+    <p>(Sell Price – Buy Price) × Quantity</p>
+    <p style="margin-top:6px;font-size:11px;color:#888">Example: Buy 10 @ $100, sell @ $105 = $5 × 10 = <strong>$50 profit</strong></p>
+  </div>
+  <div class="mini-card">
+    <h4>Break-Even Price</h4>
+    <p>Total Cost / Quantity</p>
+    <p style="margin-top:6px;font-size:11px;color:#888">The price you need to hit to cover your costs including fees</p>
+  </div>
+  <div class="mini-card">
+    <h4>Risk/Reward Ratio</h4>
+    <p>Potential Profit / Potential Loss</p>
+    <p style="margin-top:6px;font-size:11px;color:#888">Example: Risk $2, target $6 = <strong>1:3 R/R</strong>. Aim for 1:2 minimum.</p>
+  </div>
+  <div class="mini-card">
+    <h4>ATR Stop-Loss</h4>
+    <p>Entry Price − (ATR(14) × 1.5)</p>
+    <p style="margin-top:6px;font-size:11px;color:#888">Example: Entry $50, ATR $2 → Stop at $47.00</p>
+  </div>
+</div>
+
+<div class="info-box info-amber" style="margin-top:14px">
+  <strong>Why beginners lose money</strong> — Using market orders during high volatility (slippage). Focusing on dollar moves instead of percentage moves (misjudged risk). Failing to set stop-losses and letting small losses grow. Overtrading without a plan. Chasing too many indicators before understanding price action.
+</div>
+
+<!-- ===================== ORDER TYPES ===================== -->
+<div class="section-hdr" id="orders">Section 6 — Order Types</div>
+
+<table class="order-table">
+  <thead><tr><th>Order Type</th><th>What it does</th><th>When to use it</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Market Order</strong></td><td>Executes immediately at the best available price</td><td>When you need to get in or out fast. Accepts slippage.</td></tr>
+    <tr><td><strong>Limit Order</strong></td><td>Executes only at your specified price or better</td><td>When price control matters more than guaranteed fill. May not fill.</td></tr>
+    <tr><td><strong>Stop Loss</strong></td><td>Triggers when price moves against you to a set level — becomes a market order</td><td>Every trade. Non-negotiable. Protects against unlimited loss.</td></tr>
+    <tr><td><strong>Stop-Limit</strong></td><td>Triggers at stop price, then places a limit order at a specified price</td><td>When you want slippage protection but accept the risk of no fill.</td></tr>
+    <tr><td><strong>Trailing Stop</strong></td><td>Moves with price by a set amount — locks in profits as price rises</td><td>When you want to ride a trend and protect gains automatically.</td></tr>
+    <tr><td><strong>OCO</strong></td><td>One-Cancels-Other — typically a profit target + stop loss linked together</td><td>Setting both your exit target and your stop at the same time.</td></tr>
+  </tbody>
+</table>
+
+<div class="info-box info-blue">
+  <strong>Bid vs Ask (Spread):</strong> Bid = highest price buyers offer. Ask = lowest price sellers accept. The difference is the spread. Tighter spreads = more liquid stock = better fills. Always trade liquid stocks — wide spreads eat into your profits before you even start.<br><br>
+  <strong>Slippage:</strong> When you place a market order, you get whatever price is available — which may be worse than what you saw on screen, especially in fast markets or thinly traded stocks.
+</div>
+
+<!-- ===================== MINIMAL SETUP STRATEGY ===================== -->
+<div class="section-hdr">Section 7 — Minimal Setup Strategy (Beginner Framework)</div>
+
+<div class="grid2">
+  <div class="mini-card">
+    <h4>Step 1 — Trend (Moving Average)</h4>
+    <p>Use SMA(50) or SMA(200) to identify market direction. Only trade in the direction of the trend. Do not fight the trend.</p>
+  </div>
+  <div class="mini-card">
+    <h4>Step 2 — Momentum (RSI or Stochastic)</h4>
+    <p>In an uptrend, watch for RSI rising from oversold. In a downtrend, watch for it falling from overbought. Match momentum to trend.</p>
+  </div>
+  <div class="mini-card">
+    <h4>Step 3 — Confirmation (Volume or MACD)</h4>
+    <p>Confirm entries with increasing volume or a MACD crossover. This filters out false signals before you commit capital.</p>
+  </div>
+  <div class="mini-card">
+    <h4>Step 4 — Risk Management (ATR)</h4>
+    <p>Set stop-loss at 1.5 × ATR(14) below entry. Size your position so a full stop-loss costs you no more than 1–2% of your account.</p>
+  </div>
+</div>
+
+<!-- ===================== BOUNCE STACK ===================== -->
+<div class="section-hdr" id="bounce">Section 8 — Complete Bounce Trading System</div>
+
+<div class="stack">
+  <h3>The 6-Step Bounce Trading Checklist</h3>
+  <div class="stack-step">
+    <div class="step-num">1</div>
+    <div class="step-body"><strong>Qualify the setup first — check ADX(14)</strong><br>If ADX is above 35 and still rising, the downtrend is too powerful to trade against. Skip this setup and wait for the next one.</div>
+  </div>
+  <div class="stack-step">
+    <div class="step-num">2</div>
+    <div class="step-body"><strong>Find the support zone</strong><br>Look for price at a key level: EMA(20), EMA(50), SMA(200), Fibonacci 61.8%, or a clearly established horizontal support level. The stronger and more-watched the level, the better.</div>
+  </div>
+  <div class="stack-step">
+    <div class="step-num">3</div>
+    <div class="step-body"><strong>Confirm oversold with RSI(14)</strong><br>RSI should be below 30 and ideally starting to curl upward. Add Stoch(14,3,3) below 20 with a %K/%D crossover as additional confirmation. Both below their thresholds = stronger signal.</div>
+  </div>
+  <div class="stack-step">
+    <div class="step-num">4</div>
+    <div class="step-body"><strong>Confirm momentum shift with MACD(12,26,9)</strong><br>Look for the MACD line to cross above its signal line while both are still below zero. The histogram bars should be shrinking before the cross happens. This is your momentum trigger.</div>
+  </div>
+  <div class="stack-step">
+    <div class="step-num">5</div>
+    <div class="step-body"><strong>Confirm with volume</strong><br>The reversal candle must show noticeably higher volume than the down candles that came before it. Low volume on a bounce = fake-out. High volume = commitment from buyers. Do not skip this step.</div>
+  </div>
+  <div class="stack-step">
+    <div class="step-num">6</div>
+    <div class="step-body"><strong>Size your risk with ATR(14)</strong><br>Place your stop-loss at 1.5 × ATR(14) below your entry. Size your position so a full stop-out costs you no more than 1–2% of your trading account. Never use a fixed dollar stop — let ATR define the distance.</div>
+  </div>
+</div>
+
+<div class="info-box info-blue" style="margin-top:16px">
+  <strong>Trader consensus:</strong> No single indicator is required or foolproof. Most professionals use RSI + MACD + Moving Averages as a core trio, then add 1–2 more based on their personal style. Indicators work best when combined — one for trend, one for momentum, one for volume confirmation. No indicator combination eliminates risk. Always manage risk first.
+</div>
+
+</div><!-- end page -->
+
+<script>
+// ---- TOGGLE ----
+function tog(hdr){
+  var b=hdr.nextElementSibling,c=hdr.querySelector('.chev');
+  var o=b.classList.contains('open');
+  b.classList.toggle('open',!o);
+  c.classList.toggle('open',!o);
+}
+
+// ---- PRICE DATA ----
+var labels=[];
+var price=[];
+var base=100;
+var seed=42;
+function rand(){seed=(seed*16807+0)%2147483647;return seed/2147483647}
+for(var i=0;i<40;i++){
+  labels.push('D'+(i+1));
+  base+=((rand()-0.5)*4);
+  price.push(Math.round(base*100)/100);
+}
+
+// ---- RSI CHART ----
+function calcRSI(prices,p){
+  var rsi=[];
+  for(var i=0;i<p;i++)rsi.push(null);
+  var gains=0,losses=0;
+  for(var i=1;i<=p;i++){var d=prices[i]-prices[i-1];if(d>0)gains+=d;else losses-=d;}
+  var ag=gains/p,al=losses/p;
+  rsi.push(al===0?100:100-(100/(1+ag/al)));
+  for(var i=p+1;i<prices.length;i++){
+    var d=prices[i]-prices[i-1];
+    ag=(ag*(p-1)+(d>0?d:0))/p;
+    al=(al*(p-1)+(d<0?-d:0))/p;
+    rsi.push(al===0?100:100-(100/(1+ag/al)));
+  }
+  return rsi;
+}
+var rsiVals=calcRSI(price,14);
+new Chart(document.getElementById('rsiChart'),{
+  type:'line',
+  data:{
+    labels:labels,
+    datasets:[
+      {label:'RSI(14)',data:rsiVals,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.08)',borderWidth:2,pointRadius:0,tension:.4,fill:true},
+      {label:'Overbought 70',data:labels.map(()=>70),borderColor:'#dc2626',borderWidth:1,borderDash:[4,4],pointRadius:0},
+      {label:'Oversold 30',data:labels.map(()=>30),borderColor:'#059669',borderWidth:1,borderDash:[4,4],pointRadius:0},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},x:{ticks:{font:{size:9},maxTicksLimit:10},grid:{display:false}}}}
+});
+
+// ---- MACD CHART ----
+function calcEMA(prices,p){
+  var ema=[],k=2/(p+1);
+  ema[0]=prices[0];
+  for(var i=1;i<prices.length;i++)ema[i]=prices[i]*k+ema[i-1]*(1-k);
+  return ema;
+}
+var ema12=calcEMA(price,12),ema26=calcEMA(price,26);
+var macdLine=price.map((_,i)=>Math.round((ema12[i]-ema26[i])*100)/100);
+var signal=calcEMA(macdLine,9);
+var hist=macdLine.map((v,i)=>Math.round((v-signal[i])*100)/100);
+new Chart(document.getElementById('macdChart'),{
+  type:'bar',
+  data:{
+    labels:labels,
+    datasets:[
+      {label:'Histogram',data:hist,backgroundColor:hist.map(v=>v>=0?'rgba(5,150,105,.5)':'rgba(220,38,38,.5)'),order:2},
+      {label:'MACD',data:macdLine,type:'line',borderColor:'#3b82f6',borderWidth:2,pointRadius:0,tension:.4,fill:false,order:1},
+      {label:'Signal',data:signal,type:'line',borderColor:'#f97316',borderWidth:1.5,pointRadius:0,tension:.4,fill:false,borderDash:[3,3],order:1},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},x:{ticks:{font:{size:9},maxTicksLimit:10},grid:{display:false}}}}
+});
+
+// ---- SMA CHART ----
+function calcSMA(prices,p){
+  return prices.map((_,i)=>i<p-1?null:Math.round(prices.slice(i-p+1,i+1).reduce((a,b)=>a+b,0)/p*100)/100);
+}
+var sma50=calcSMA(price,20),sma200=calcSMA(price,30); // shortened for 40 data pts
+new Chart(document.getElementById('smaChart'),{
+  type:'line',
+  data:{
+    labels:labels,
+    datasets:[
+      {label:'Price',data:price,borderColor:'#374151',backgroundColor:'rgba(55,65,81,.05)',borderWidth:1.5,pointRadius:0,tension:.3,fill:true},
+      {label:'SMA(20)',data:sma50,borderColor:'#3b82f6',borderWidth:2,pointRadius:0,tension:.4,fill:false},
+      {label:'SMA(30)',data:sma200,borderColor:'#f97316',borderWidth:2,pointRadius:0,tension:.4,fill:false,borderDash:[4,4]},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:16,padding:10}}},scales:{y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},x:{ticks:{font:{size:9},maxTicksLimit:10},grid:{display:false}}}}
+});
+
+// ---- BOLLINGER BANDS CHART ----
+var mid=calcSMA(price,14);
+function calcBB(prices,p,dev){
+  var upper=[],lower=[];
+  for(var i=0;i<prices.length;i++){
+    if(i<p-1){upper.push(null);lower.push(null);continue;}
+    var sl=prices.slice(i-p+1,i+1);
+    var mean=sl.reduce((a,b)=>a+b,0)/p;
+    var variance=sl.reduce((a,b)=>a+(b-mean)**2,0)/p;
+    var sd=Math.sqrt(variance);
+    upper.push(Math.round((mean+dev*sd)*100)/100);
+    lower.push(Math.round((mean-dev*sd)*100)/100);
+  }
+  return{upper,lower};
+}
+var bb=calcBB(price,14,2);
+new Chart(document.getElementById('bbChart'),{
+  type:'line',
+  data:{
+    labels:labels,
+    datasets:[
+      {label:'Upper Band',data:bb.upper,borderColor:'#dc2626',borderWidth:1.5,pointRadius:0,tension:.4,fill:false,borderDash:[3,3]},
+      {label:'Middle SMA',data:mid,borderColor:'#3b82f6',borderWidth:1.5,pointRadius:0,tension:.4,fill:false},
+      {label:'Price',data:price,borderColor:'#374151',borderWidth:2,pointRadius:0,tension:.3,fill:false},
+      {label:'Lower Band',data:bb.lower,borderColor:'#059669',borderWidth:1.5,pointRadius:0,tension:.4,fill:false,borderDash:[3,3]},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:16,padding:8}}},scales:{y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},x:{ticks:{font:{size:9},maxTicksLimit:10},grid:{display:false}}}}
+});
+
+// ---- VOLUME CHART ----
+var vol=price.map((_,i)=>i===0?500000:Math.round((rand()*800000+200000)));
+var upDay=price.map((_,i)=>i===0?true:price[i]>=price[i-1]);
+new Chart(document.getElementById('volChart'),{
+  type:'bar',
+  data:{
+    labels:labels,
+    datasets:[{
+      label:'Volume',data:vol,
+      backgroundColor:upDay.map(u=>u?'rgba(5,150,105,.6)':'rgba(220,38,38,.6)'),
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:10},callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':(v/1000).toFixed(0)+'K'},grid:{color:'rgba(0,0,0,.06)'}},x:{ticks:{font:{size:9},maxTicksLimit:10},grid:{display:false}}}}
+});
+
+// ---- STOCHASTIC CHART ----
+function calcStoch(prices,kp,smooth){
+  var k=[];
+  for(var i=0;i<prices.length;i++){
+    if(i<kp-1){k.push(null);continue;}
+    var sl=prices.slice(i-kp+1,i+1);
+    var h=Math.max(...sl),l=Math.min(...sl);
+    k.push(h===l?50:Math.round(((prices[i]-l)/(h-l))*10000)/100);
+  }
+  var d=calcEMA(k.filter(v=>v!==null),smooth);
+  var dPadded=k.map((v,i)=>v===null?null:d[k.filter(v=>v!==null).indexOf(v)]);
+  return{k,d:dPadded};
+}
+var stoch=calcStoch(price,14,3);
+new Chart(document.getElementById('stochChart'),{
+  type:'line',
+  data:{
+    labels:labels,
+    datasets:[
+      {label:'%K',data:stoch.k,borderColor:'#3b82f6',borderWidth:2,pointRadius:0,tension:.4,fill:false},
+      {label:'%D',data:stoch.d,borderColor:'#f97316',borderWidth:1.5,pointRadius:0,tension:.4,fill:false,borderDash:[3,3]},
+      {label:'Overbought 80',data:labels.map(()=>80),borderColor:'#dc2626',borderWidth:1,borderDash:[4,4],pointRadius:0},
+      {label:'Oversold 20',data:labels.map(()=>20),borderColor:'#059669',borderWidth:1,borderDash:[4,4],pointRadius:0},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},x:{ticks:{font:{size:9},maxTicksLimit:10},grid:{display:false}}}}
+});
+</script>
+</body>
+</html>
